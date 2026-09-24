@@ -10,12 +10,10 @@ export default function Home() {
     <>
       <Nav />
       <ScrollShell>
-        <div className="white-bg-content">
-          <StatementSection />
-          <FeaturesHeroSection />
-          <ContactSection />
-          <Footer />
-        </div>
+        <StatementSection />
+        <FeaturesHeroSection />
+        <ContactSection />
+        <Footer />
       </ScrollShell>
     </>
   );
