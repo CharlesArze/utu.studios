@@ -21,7 +21,7 @@ export default function Nav() {
           child of header, specifically so it can sit ABOVE that same
           canvas — nesting it inside header would cap it at header's own
           (lower) stacking level regardless of its own z-index. */}
-      <header data-nav-chrome className="fixed inset-x-0 top-0 z-40 h-[72px] lg:h-20 flex items-center justify-between px-6 lg:px-20 bg-black">
+      <header data-nav-chrome className="fixed left-1/2 top-0 z-40 h-[72px] lg:h-20 w-[70%] -translate-x-1/2 flex items-center justify-between px-6 lg:px-20 bg-black">
       <Link href="/" className="relative z-40 flex-shrink-0 flex items-center gap-3 lg:gap-4">
         {/* eslint-disable-next-line @next/next/no-img-element -- static vector asset, no optimization needed */}
         {/* Sphere mark + wordmark both sized at 85% of their original header
@@ -61,7 +61,7 @@ export default function Nav() {
           the hero's scroll-lock preventDefault — moving this out of
           `<header>` silently broke that exemption (it only matched
           `.closest("header")`) until this attribute was added. */}
-      <div data-nav-chrome className="lg:hidden fixed top-0 right-0 z-[80] h-[72px] flex items-center px-6">
+      <div data-nav-chrome className="lg:hidden fixed top-0 right-[15%] z-[80] h-[72px] flex items-center px-6">
         <button
           type="button"
           onClick={() => setMobileOpen((v) => !v)}
