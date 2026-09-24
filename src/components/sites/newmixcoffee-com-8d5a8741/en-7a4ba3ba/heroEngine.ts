@@ -786,8 +786,15 @@ export function createHeroEngine(canvas: HTMLCanvasElement, opts: HeroEngineOpti
     // Only runs during entrance/idle (revealActive/returnActive manage alpha
     // themselves — see stepReveal/stepReturn/setMorphProgress). At rest in
     // the hero (morphProgress 0) every particle should read as visible dust.
+    // `arrived` gates the isText particles specifically: heroEngine's own
+    // 0.8s reveal clock and the outer GSAP tween driving morphProgress are
+    // two independent clocks, so revealActive can finish (arrived=true,
+    // alpha already snapped to 0) a frame or two before morphProgress
+    // itself reads exactly 1 — without this check, that brief idle-branch
+    // frame reset isText alpha back to 1, showing a stippled dust fringe
+    // re-appear right on top of the now-fully-opaque flat vector logo.
     for (let i = 0; i < n; i++) {
-      alphas[i] = isText[i] ? 1 : Math.max(0, 1 - morphProgress);
+      alphas[i] = isText[i] ? (arrived ? 0 : 1) : Math.max(0, 1 - morphProgress);
     }
     (geometry.attributes.aAlpha as THREE.BufferAttribute).needsUpdate = true;
   }
