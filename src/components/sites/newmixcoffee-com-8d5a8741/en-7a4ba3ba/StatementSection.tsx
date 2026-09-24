@@ -105,6 +105,12 @@ export default function StatementSection() {
       }
 
       const pinnedExtra = bottom + 90;
+      // The parallax bg's fixed "300%" (from the JSX) only ever buys 2 viewport-heights of
+      // travel before it runs out and the section's own black bg shows through underneath —
+      // fine when pinnedExtra happens to be under that, but this tramo's content (labels +
+      // wordmark) routinely needs more. Size it to the pin's actual scroll distance instead,
+      // so it always has exactly enough room to cover the full pin.
+      bg.style.height = `${viewportH + pinnedExtra}px`;
       const bgRange = -(bg.offsetHeight - (bg.parentElement?.offsetHeight ?? bg.offsetHeight));
       // Height goes on the OUTER wrapper, never on the sticky pin itself.
       wrapper.style.height = `${viewportH + pinnedExtra}px`;
@@ -187,18 +193,37 @@ export default function StatementSection() {
     let ctx = gsap.context(setup, wrapperRef);
 
     let resizeTimer: number | undefined;
-    const onResize = () => {
+    const rebuild = () => {
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(() => {
         ctx.revert();
         ctx = gsap.context(setup, wrapperRef);
+        lastContentHeight = contentRef.current?.offsetHeight ?? lastContentHeight;
       }, 200);
     };
-    window.addEventListener("resize", onResize);
+    window.addEventListener("resize", rebuild);
+
+    // `setup()` measures `bottom`/`j` (and sizes the wrapper from them) once, synchronously —
+    // if the web font swaps in or a poster image finishes sizing after that, the pin's scroll
+    // distance goes stale and shorter than the content actually needs, so it un-pins before the
+    // labels/wordmark finish revealing (the "cortado" reported on real pages, reproduced here
+    // with a short-viewport scrub). A resize only catches viewport changes, not this, so also
+    // watch the content's own height and rebuild if it moves once things settle.
+    let lastContentHeight = contentRef.current.offsetHeight;
+    const contentObserver = new ResizeObserver(() => {
+      const el = contentRef.current;
+      if (!el) return;
+      const h = el.offsetHeight;
+      if (Math.abs(h - lastContentHeight) < 2) return;
+      lastContentHeight = h;
+      rebuild();
+    });
+    contentObserver.observe(contentRef.current);
 
     return () => {
-      window.removeEventListener("resize", onResize);
+      window.removeEventListener("resize", rebuild);
       window.clearTimeout(resizeTimer);
+      contentObserver.disconnect();
       ctx.revert();
     };
   }, [scroller, mobile]);
