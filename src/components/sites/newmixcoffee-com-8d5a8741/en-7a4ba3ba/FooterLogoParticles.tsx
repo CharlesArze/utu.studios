@@ -12,12 +12,22 @@ export default function FooterLogoParticles({ className }: { className?: string 
     if (!canvas || !container) return;
 
     let engine: FooterLogoEngine | null = null;
+    let played = false;
 
+    // Fires once per page load: the wordmark forms the first time the footer scrolls into view,
+    // then stays static — leaving/re-entering the section never replays it (only a reload does).
     const observer = new IntersectionObserver(
       (entries) => {
-        if (!entries.some((e) => e.isIntersecting)) return;
-        if (!engine) engine = createFooterLogoEngine(canvas, container);
-        engine?.replay();
+        if (played || !entries.some((e) => e.isIntersecting)) return;
+        played = true;
+        observer.disconnect();
+        engine = createFooterLogoEngine(canvas, container);
+        if (!engine) return;
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          engine.showFinal();
+        } else {
+          engine.play();
+        }
       },
       { threshold: 0.3 }
     );
