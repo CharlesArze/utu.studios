@@ -157,7 +157,17 @@ const HeroCanvas = forwardRef<HeroCanvasHandle, HeroCanvasProps>(function HeroCa
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
       </div>
       <div
-        className="fixed inset-0 z-30 pointer-events-none"
+        // Below the white scroller (z-[25] in ScrollShell.tsx), not above it.
+        // `showChrome` only flips false once React re-renders after
+        // `setCurrentSection("white")` fires in the reveal tween's
+        // onComplete — for the whole 0.8s leading up to that, this layer
+        // (indicator + bottom labels) is still mounted. Sitting above the
+        // white panel meant that, as the panel slid up into view near the
+        // end of the tween, the indicator/labels briefly showed through on
+        // top of it. Sitting below it, the panel simply covers this layer
+        // as it arrives — no timing fix needed, it's just never visible
+        // once there's anything else in front of it.
+        className="fixed inset-0 z-20 pointer-events-none"
         onWheel={(e) => showChrome && e.deltaY > 30 && onWheelDown()}
         style={{ pointerEvents: showChrome ? "auto" : "none" }}
       >
