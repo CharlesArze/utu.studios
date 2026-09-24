@@ -12,7 +12,8 @@ export type BrandSnapMobileHandle = {
 };
 
 const NAV_HEIGHT = 72; // matches Nav.tsx's mobile height (lg:80)
-const MORPH_HEIGHT = 148; // UtuLogo box height used by the morph target (see StatementSection)
+const MORPH_WIDTH = 220; // UtuLogo box size used by the morph target (see StatementSection/heroEngine)
+const MORPH_HEIGHT = 86;
 const MORPH_GAP = 14; // gap before the first dash line (mt-[14px] on BrandSnapStep1)
 
 /**
@@ -148,7 +149,7 @@ const BrandSnapMobile = forwardRef<BrandSnapMobileHandle, { onComplete: () => vo
           <div
             data-hero-morph-target
             className="absolute left-1/2 -translate-x-1/2 pointer-events-none text-black z-10 opacity-0"
-            style={{ width: 380, height: MORPH_HEIGHT, top: "75vh" }}
+            style={{ width: MORPH_WIDTH, height: MORPH_HEIGHT, top: "75vh" }}
           >
             <UtuLogo className="w-full h-full" viewBox="11 5 1009 394" />
           </div>

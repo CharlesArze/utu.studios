@@ -223,7 +223,7 @@ export default function StatementSection() {
           <div
             data-hero-morph-target
             className="absolute left-1/2 -translate-x-1/2 pointer-events-none text-black z-10 opacity-0"
-            style={{ width: 380, height: 148, top: "75vh" }}
+            style={{ width: 220, height: 86, top: "75vh" }}
           >
             <UtuLogo className="w-full h-full" viewBox="11 5 1009 394" />
           </div>
