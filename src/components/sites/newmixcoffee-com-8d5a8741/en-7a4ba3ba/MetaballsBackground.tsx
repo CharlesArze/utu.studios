@@ -29,6 +29,7 @@ uniform vec4 u_finish;     // hue, vignette, blur, grain
 uniform vec4 u_transform;  // seed, rotation, drift, OKLab toggle
 uniform vec4 u_space;      // offset.xy, pointer.xy
 uniform vec4 u_cursor;
+uniform vec2 u_focus;      // container-space point at the viewport's vertical centre
 
 #define u_resolution u_scene.xy
 #define u_time u_scene.z
@@ -199,16 +200,15 @@ void main() {
   // coordinate by the width keeps the same blob density/scale as the wider desktop
   // footer instead of stretching a handful of blobs across a much taller canvas.
   //
-  // Centred by construction, not by a hand-tuned offset: a previous fix nudged the
-  // sampled point by a fixed fraction of the width, tuned to look right at one
-  // aspect ratio — solving through the scale/rotate/offset chain below shows that
-  // combination actually lands the cluster around 87% across and 82% down each
-  // tile, nowhere near centred, and on a short tile (a shallow mobile footer) that
-  // sits below the visible slice entirely. Centring both axes on the container's
-  // own middle first, THEN tiling Y around that same centre, keeps the cluster's
-  // middle at the container's middle regardless of its aspect ratio.
+  // The canvas spans the WHOLE footer (often several screens tall), so centring on
+  // the container's own middle only shows a blob cluster when that one fixed point
+  // happens to scroll into view — on a short viewport (mobile) most scroll
+  // positions land on a tile edge instead, reading as empty. u_focus is the
+  // container-space point that's currently at the viewport's own vertical centre
+  // (tracked every frame from JS), so the nearest cluster is retiled to sit there
+  // instead of at a fixed spot — always centred in whatever's actually on screen.
   float period = u_resolution.x;
-  vec2 centered = gl_FragCoord.xy - 0.5 * u_resolution.xy;
+  vec2 centered = gl_FragCoord.xy - u_focus;
   centered.y = mod(centered.y + 0.5 * period, period) - 0.5 * period;
   vec2 p = centered / period;
   float cursorMask = 0.0;
@@ -361,6 +361,7 @@ export default function MetaballsBackground({ className }: { className?: string 
     const uTransform = gl.getUniformLocation(program, "u_transform");
     const uSpace = gl.getUniformLocation(program, "u_space");
     const uCursor = gl.getUniformLocation(program, "u_cursor");
+    const uFocus = gl.getUniformLocation(program, "u_focus");
 
     gl.uniform3f(uColor0, ...COLOR_LOW);
     gl.uniform3f(uColor1, ...COLOR_MID);
@@ -412,6 +413,15 @@ export default function MetaballsBackground({ className }: { className?: string 
         // instead of re-introducing the fixed-fraction shift that used to fight
         // the centring math there.
         gl!.uniform4f(uSpace, 0, 0, 0, 0);
+        // Retile so the nearest blob cluster sits at whatever part of the (much
+        // taller) footer is currently in the viewport, instead of a fixed point
+        // that only lines up with the screen on some scroll positions/screen
+        // heights — see the shader's u_focus comment.
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const rect = container!.getBoundingClientRect();
+        const viewportCenterY = window.innerHeight / 2 - rect.top;
+        const focusY = Math.max(0, Math.min(rect.height, viewportCenterY)) * dpr;
+        gl!.uniform2f(uFocus, canvas!.width * 0.5, focusY);
         gl!.drawArrays(gl!.TRIANGLES, 0, 3);
       }
       raf = requestAnimationFrame(frame);
