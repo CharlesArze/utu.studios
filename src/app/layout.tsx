@@ -1,20 +1,31 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const sfPro = localFont({
+  src: "../../public/fonts/SF-Pro-Subset.woff2",
+  variable: "--font-sf-pro",
+  weight: "100 900",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const pretendard = localFont({
+  src: "../../public/fonts/PretendardVariable.woff2",
+  variable: "--font-pretendard",
+  weight: "100 900",
+  display: "swap",
+});
+
+const helveticaBlack = localFont({
+  src: "../../public/fonts/Helvetica-Black.ttf",
+  variable: "--font-helvetica-black",
+  weight: "900",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Website Clone",
-  description: "Pixel-perfect website clone",
+  title: "UTU Studios",
+  description: "UTU Studios es un estudio multidisciplinario de diseño de producto.",
 };
 
 export default function RootLayout({
@@ -25,9 +36,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${sfPro.variable} ${pretendard.variable} ${helveticaBlack.variable} bg-black h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full bg-black">{children}</body>
     </html>
   );
 }
