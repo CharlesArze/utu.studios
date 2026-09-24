@@ -13,11 +13,13 @@ export type BrandSnapStepHandle = {
 const LINE_PATH =
   "M117.98.27c21.52,33.28-17.23,44.74-48.42,58.93S25.2,93.31,15.81,113.18c-17.94,37.96-19.28,85.81,3.72,121.88,36.11,56.62,118.62,74.26,168.69,25.29,30.7-30.03,40.24-78.07,23.93-117.73-28.23-68.65-114.35-85.94-170.29-37.51C-4.17,144.96-11.44,221.93,18.36,270.76c2.29,3.76,4.83,7.37,7.57,10.82,30.53,38.51,82.73,52.47,93.36,77.77";
 
+// Same values as StatementSection.tsx's TAG_LABELS — both share this exact viewBox, so
+// keeping the numbers identical is what makes the circle read the same on mobile and desktop.
 const TAG_LABELS = [
-  { text: "Diseño de Marca", x: 110, y: 120 },
-  { text: "Diseño de Experiencia", x: 110, y: 166.7 },
-  { text: "Desarrollo Web", x: 110, y: 213.3 },
-  { text: "Producción de Contenido", x: 110, y: 260 },
+  { text: "Diseño de Marca", x: 110, y: 122.5 },
+  { text: "Diseño de Experiencia", x: 110, y: 162.5 },
+  { text: "Desarrollo Web", x: 110, y: 202.5 },
+  { text: "Producción de Contenido", x: 110, y: 242.5 },
 ];
 
 /** Step 1 of the mobile "brand-snap" — dash line + BrandStory_1 + intro line. Durations/positions ported verbatim from `T`'s `k` sub-component in the reference bundle. */
@@ -215,7 +217,7 @@ export const BrandSnapStep3 = forwardRef<BrandSnapStepHandle>(function BrandSnap
           {TAG_LABELS.map((label, i) => (
             <text
               key={label.text}
-              className={`line-label line-label-${i + 1} text-[11px]`}
+              className={`line-label line-label-${i + 1} text-[14px]`}
               x={label.x}
               y={label.y}
               textAnchor="middle"

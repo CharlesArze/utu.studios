@@ -14,11 +14,15 @@ export type StatementSectionHandle = {
   reset: () => void;
 };
 
+// y positions centered on the spiral's circular loop (measured: the loop spans roughly
+// y=77 to y=288, center ~182.5) with tighter spacing than the loop's own radius would
+// suggest, so every line clears the loop's edge — same values BrandSnapSteps.tsx uses,
+// since both share this exact viewBox and should read identically at any size.
 const TAG_LABELS = [
-  { text: "Diseño de Marca", x: 110, y: 137.5 },
-  { text: "Diseño de Experiencia", x: 110, y: 184.2 },
-  { text: "Desarrollo Web", x: 110, y: 230.8 },
-  { text: "Producción de Contenido", x: 110, y: 277.5 },
+  { text: "Diseño de Marca", x: 110, y: 122.5 },
+  { text: "Diseño de Experiencia", x: 110, y: 162.5 },
+  { text: "Desarrollo Web", x: 110, y: 202.5 },
+  { text: "Producción de Contenido", x: 110, y: 242.5 },
 ];
 
 const LINE_PATH =
@@ -340,7 +344,7 @@ export default function StatementSection() {
               {TAG_LABELS.map((label, i) => (
                 <text
                   key={label.text}
-                  className={`line-label line-label-${i + 1} text-[14px] lg:text-[13px]`}
+                  className={`line-label line-label-${i + 1} text-[14px]`}
                   x={label.x}
                   y={label.y}
                   textAnchor="middle"
