@@ -417,10 +417,21 @@ export default function MetaballsBackground({ className }: { className?: string 
         // taller) footer is currently in the viewport, instead of a fixed point
         // that only lines up with the screen on some scroll positions/screen
         // heights — see the shader's u_focus comment.
+        //
+        // Clamping straight to 0 let the cluster's centre land exactly on the
+        // section's top edge, cutting the upper half of every blob off against
+        // the section above. A cluster's max radius is ~0.308x the container
+        // width (0.55 orbit amplitude + ~0.311 blob visual radius, both in
+        // u_scale-space, divided by u_scale=2.8 — see MetaballsBackground's
+        // shape uniform). Keep a margin of that size (+safety pad) off the top
+        // edge so the full cluster always stays inside the section; recomputed
+        // every frame from the live container rect, so it tracks resizes and
+        // orientation changes.
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         const rect = container!.getBoundingClientRect();
+        const topMargin = Math.min(rect.width * 0.34, rect.height);
         const viewportCenterY = window.innerHeight / 2 - rect.top;
-        const focusY = Math.max(0, Math.min(rect.height, viewportCenterY)) * dpr;
+        const focusY = Math.max(topMargin, Math.min(rect.height, viewportCenterY)) * dpr;
         gl!.uniform2f(uFocus, canvas!.width * 0.5, focusY);
         gl!.drawArrays(gl!.TRIANGLES, 0, 3);
       }
