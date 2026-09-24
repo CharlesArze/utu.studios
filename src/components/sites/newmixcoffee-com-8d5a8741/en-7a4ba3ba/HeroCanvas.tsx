@@ -5,7 +5,7 @@ import type { HeroEngine } from "./heroEngine";
 
 export type HeroCanvasHandle = Pick<
   HeroEngine,
-  "setMorphProgress" | "setColorMixTarget" | "setWhiteBgYOffset" | "updateMorphTarget" | "setTextFade" | "resumeLoop"
+  "setMorphProgress" | "setColorMixTarget" | "setWhiteBgYOffset" | "updateMorphTarget" | "resumeLoop"
 >;
 
 type HeroCanvasProps = {
@@ -56,7 +56,6 @@ const HeroCanvas = forwardRef<HeroCanvasHandle, HeroCanvasProps>(function HeroCa
       setColorMixTarget: (t) => engineRef.current?.setColorMixTarget(t),
       setWhiteBgYOffset: (o) => engineRef.current?.setWhiteBgYOffset(o),
       updateMorphTarget: () => engineRef.current?.updateMorphTarget(),
-      setTextFade: (t) => engineRef.current?.setTextFade(t),
       resumeLoop: () => engineRef.current?.resumeLoop(),
     }),
     [],

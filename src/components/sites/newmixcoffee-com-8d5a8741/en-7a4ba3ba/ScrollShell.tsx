@@ -122,14 +122,13 @@ export default function ScrollShell({ children }: { children: ReactNode }) {
         el.scrollTop = 0;
         whitePhaseRef.current = "landing";
         setCurrentSection("white");
-        gsap.to("[data-hero-morph-target]", {
-          opacity: 1,
-          duration: 0.25,
-          ease: "power2.out",
-          onUpdate() {
-            heroRef.current?.setTextFade(gsap.getProperty(this.targets()[0], "opacity") as number);
-          },
-        });
+        // No separate crossfade tween here — heroEngine's own reveal clock
+        // (triggered the instant setMorphProgress first went >0, above)
+        // already crossfades the dust into the flat vector logo internally,
+        // over the same fixed 0.8s window the reference uses, folded into
+        // its last 40%. A second bolt-on tween here was the "rápidamente
+        // se convierte al logo plano" jump reported — two separate steps
+        // instead of one continuous motion.
         isBusy.current = false;
         armCooldown();
       },
@@ -156,17 +155,14 @@ export default function ScrollShell({ children }: { children: ReactNode }) {
         armCooldown();
       },
     });
+    // Opacity isn't animated here — the reveal crossfade already finished
+    // during transitionToWhite (see there); this only moves the (already
+    // fully opaque) logo up to its resting position.
     tl.to("[data-hero-morph-target]", {
       top: `${Math.round(0.25 * window.innerHeight - nav)}px`,
-      opacity: 1,
       duration: 0.6,
       ease: "power3.out",
-      onUpdate: () => {
-        heroRef.current?.updateMorphTarget();
-        const el = document.querySelector("[data-hero-morph-target]");
-        const wordmarkOpacity = el ? (gsap.getProperty(el, "opacity") as number) : 1;
-        heroRef.current?.setTextFade(wordmarkOpacity);
-      },
+      onUpdate: () => heroRef.current?.updateMorphTarget(),
     });
     tl.fromTo(".brand-dash-line", { clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0% 0)", duration: 0.5 }, 0.3);
     tl.fromTo(".brand-image", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.4 }, 0.4);
@@ -189,15 +185,15 @@ export default function ScrollShell({ children }: { children: ReactNode }) {
     destroyLenis();
     el.style.overflowY = "hidden";
     el.scrollTop = 0;
-    heroRef.current?.setTextFade(0);
     heroRef.current?.resumeLoop();
     // Snapped synchronously, not tweened — matches the reference exactly: the
-    // reverse GSAP tween below only animates colorMixTarget/whiteBgYOffset,
-    // and the engine's own velocity/damping spring (stepParticles) carries
-    // particles from the logo back to the "you to you" shape on its own once
-    // this target flips. Never calling this at all (the previous bug) left
-    // morphProgress stuck at 1, which is why the hero came back empty/stuck
-    // on the logo — every non-landing particle's alpha is `1 - morphProgress`.
+    // reverse GSAP tween below only animates colorMixTarget/whiteBgYOffset.
+    // This triggers the engine's own internal "return" animation (a fixed
+    // 0.8s eased position tween back to the "you to you" shape, its own
+    // clock, independent of this outer tween) and resets the overlay logo's
+    // opacity — see heroEngine.ts's setMorphProgress. Never calling this at
+    // all (the previous bug) left morphProgress stuck at 1, which is why the
+    // hero came back empty/stuck on the logo.
     heroRef.current?.setMorphProgress(0);
     gsap.set("[data-hero-morph-target]", { top: "75vh", opacity: 0, y: 0 });
     gsap.set(".brand-dash-line, .brand-dash-line-2", { clipPath: "inset(0 0 100% 0)" });

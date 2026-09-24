@@ -19,11 +19,6 @@ export type HeroEngine = {
    * frame the `[data-hero-morph-target]` element itself is being animated (e.g. its `top` moving), so the
    * particles that already formed the target shape keep tracking it instead of visually detaching. */
   updateMorphTarget: () => void;
-  /** 0 = the particles forming the logo are fully visible (dust logo), 1 = they're fully faded out.
-   * Call this in lockstep with the real vector logo's own opacity fade-in so the dust hands off to a
-   * clean solid shape instead of sitting on top of it forever (the particles that land exactly on the
-   * logo never fade on their own — only non-landing ones do, via morphProgress). */
-  setTextFade: (t: number) => void;
   /** Tilts the particle field in degrees, matching the CSS transform the hero's chrome layer uses.
    * Done in-scene rather than by CSS-transforming the canvas: a 3D CSS transform makes the GPU
    * resample the canvas as a texture, and the near-regular 1px grain beats against the sample grid
@@ -135,6 +130,8 @@ export function createHeroEngine(canvas: HTMLCanvasElement, opts: HeroEngineOpti
   let oy = new Float32Array(0);
   let startX = new Float32Array(0);
   let startY = new Float32Array(0);
+  let returnFromX = new Float32Array(0);
+  let returnFromY = new Float32Array(0);
   let pDelay = new Float32Array(0);
   let pDuration = new Float32Array(0);
   let wobAmp = new Float32Array(0);
@@ -163,10 +160,25 @@ export function createHeroEngine(canvas: HTMLCanvasElement, opts: HeroEngineOpti
   let touchStartTime = 0;
 
   let morphProgress = 0;
+  let morphWasActive = false;
   let colorMixTarget = 0;
   let colorMixValue = 0;
   let colorMixUniform: { value: number } | null = null;
-  let textFade = 0;
+
+  // The reveal (hero-text -> logo) and return (logo -> hero-text) beats are
+  // each a fixed 0.8s eased *position* tween with their own clock — not fed
+  // continuously by `morphProgress`'s live value (that's only used as an
+  // edge-trigger, going 0->active or active->0). This is a direct port of
+  // the reference's own `aB`/`aF` phases: verbatim `1 - Math.pow(1-p, 3)`
+  // easing, same 0.8s duration, and the vector-logo opacity crossfade
+  // folded into the last 40% of the SAME window instead of a separate
+  // bolt-on tween — see heroEngine's rebuild notes.
+  let revealActive = false;
+  let returnActive = false;
+  let revealStartAt = 0;
+  let returnStartAt = 0;
+  let arrived = false;
+  let overlayEl: HTMLElement | null = null;
 
   let entranceStart = 0;
   let entranceActive = true;
@@ -310,7 +322,7 @@ export function createHeroEngine(canvas: HTMLCanvasElement, opts: HeroEngineOpti
     // cause of the original flat look. Stay above ~0.55. Reducing size also thins coverage and there
     // is no headroom to compensate with count, since DENSITY_CEILING is already near 1 and the
     // sampling grid is an integer.
-    material.size = (mobile ? 0.6 : 0.67) * Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO);
+    material.size = (mobile ? 0.5 : 0.8) * Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO);
 
     numCols = Math.max(1, Math.ceil(viewWidth / CELL));
     numRows = Math.max(1, Math.ceil(viewHeight / CELL));
@@ -344,6 +356,8 @@ export function createHeroEngine(canvas: HTMLCanvasElement, opts: HeroEngineOpti
     oy = new Float32Array(n);
     startX = new Float32Array(n);
     startY = new Float32Array(n);
+    returnFromX = new Float32Array(n);
+    returnFromY = new Float32Array(n);
     pDelay = new Float32Array(n);
     pDuration = new Float32Array(n);
     wobAmp = new Float32Array(n);
@@ -769,11 +783,59 @@ export function createHeroEngine(canvas: HTMLCanvasElement, opts: HeroEngineOpti
   }
 
   function updateAlpha() {
-    const textAlpha = 1 - textFade;
+    // Only runs during entrance/idle (revealActive/returnActive manage alpha
+    // themselves — see stepReveal/stepReturn/setMorphProgress). At rest in
+    // the hero (morphProgress 0) every particle should read as visible dust.
     for (let i = 0; i < n; i++) {
-      alphas[i] = isText[i] ? textAlpha : Math.max(0, 1 - morphProgress);
+      alphas[i] = isText[i] ? 1 : Math.max(0, 1 - morphProgress);
     }
     (geometry.attributes.aAlpha as THREE.BufferAttribute).needsUpdate = true;
+  }
+
+  function setOverlayOpacity(v: number) {
+    if (!overlayEl) overlayEl = document.querySelector<HTMLElement>("[data-hero-morph-target]");
+    if (overlayEl) overlayEl.style.opacity = String(v);
+  }
+
+  /** Hero text -> logo: fixed 0.8s eased position tween, own clock (see the `revealActive` comment above). */
+  function stepReveal(now: number) {
+    const frac = Math.min(1, (now - revealStartAt) / 0.8);
+    const eased = 1 - Math.pow(1 - frac, 3);
+    for (let i = 0; i < n; i++) {
+      positions[i * 3] = returnFromX[i] + (textX[i] - returnFromX[i]) * eased;
+      positions[i * 3 + 1] = returnFromY[i] + (textY[i] - returnFromY[i]) * eased;
+      vx[i] = 0;
+      vy[i] = 0;
+    }
+    // Vector-logo crossfade folded into the last 40% of this same window —
+    // not a separate step after the particles arrive.
+    if (frac > 0.6) {
+      const e = (frac - 0.6) / 0.4;
+      const opacity = e > 0.99 ? 1 : e;
+      setOverlayOpacity(opacity);
+      for (let i = 0; i < n; i++) alphas[i] = 1 - e;
+      (geometry.attributes.aAlpha as THREE.BufferAttribute).needsUpdate = true;
+    }
+    if (frac >= 1) {
+      revealActive = false;
+      arrived = true;
+      setOverlayOpacity(1);
+      for (let i = 0; i < n; i++) alphas[i] = 0;
+      (geometry.attributes.aAlpha as THREE.BufferAttribute).needsUpdate = true;
+    }
+  }
+
+  /** Logo -> hero text: symmetric fixed 0.8s eased position tween back to the "you to you" shape. */
+  function stepReturn(now: number) {
+    const frac = Math.min(1, (now - returnStartAt) / 0.8);
+    const eased = 1 - Math.pow(1 - frac, 3);
+    for (let i = 0; i < n; i++) {
+      positions[i * 3] = returnFromX[i] + (logoX[i] - returnFromX[i]) * eased;
+      positions[i * 3 + 1] = returnFromY[i] + (logoY[i] - returnFromY[i]) * eased;
+      vx[i] = 0;
+      vy[i] = 0;
+    }
+    if (frac >= 1) returnActive = false;
   }
 
   function updateColorMix() {
@@ -954,9 +1016,14 @@ export function createHeroEngine(canvas: HTMLCanvasElement, opts: HeroEngineOpti
     if (n > 0) {
       updateRestTargets();
 
-      if (entranceActive) {
+      if (revealActive) {
+        stepReveal(now);
+      } else if (returnActive) {
+        stepReturn(now);
+      } else if (entranceActive) {
         const elapsed = now - entranceStart;
         if (stepEntrance(elapsed)) entranceActive = false;
+        updateAlpha();
       } else {
         accumulator += frameDt;
         let steps = 0;
@@ -982,15 +1049,15 @@ export function createHeroEngine(canvas: HTMLCanvasElement, opts: HeroEngineOpti
           accumulator -= FIXED_DT;
           steps++;
         }
+        updateAlpha();
       }
 
-      updateAlpha();
       (geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
     }
 
     renderer.render(scene, camera);
 
-    const settled = morphProgress >= 1 && Math.abs(colorMixValue - colorMixTarget) < 0.01;
+    const settled = !revealActive && !returnActive && morphProgress >= 1 && Math.abs(colorMixValue - colorMixTarget) < 0.01;
     if (settled) {
       rafId = null;
       return;
@@ -1007,6 +1074,68 @@ export function createHeroEngine(canvas: HTMLCanvasElement, opts: HeroEngineOpti
 
   function setMorphProgress(p: number) {
     morphProgress = Math.min(1, Math.max(0, p));
+    const isActive = morphProgress > 0;
+
+    if (isActive && !morphWasActive) {
+      // Forward trigger: reveal from wherever particles currently sit toward
+      // the logo shape (their live rendered position, not a rest target —
+      // in practice this fires on frame 1 of the outer tween so it's
+      // effectively the hero-text shape, but captured live for correctness
+      // if re-triggered mid-flight).
+      revealActive = true;
+      returnActive = false;
+      revealStartAt = performance.now() / 1000;
+      for (let i = 0; i < n; i++) {
+        returnFromX[i] = positions[i * 3];
+        returnFromY[i] = positions[i * 3 + 1];
+      }
+    } else if (!isActive && morphWasActive) {
+      // Reverse trigger: return from wherever particles currently sit back
+      // to the hero-text shape.
+      returnActive = true;
+      revealActive = false;
+      returnStartAt = performance.now() / 1000;
+      if (arrived) {
+        // Fully landed on the logo already — start each particle from its
+        // own logo-shape point (or, for the filler particles that never got
+        // a crisp slot, a small jitter around a random landed particle),
+        // matching the reference exactly instead of an arbitrary snap.
+        const textIdx: number[] = [];
+        for (let i = 0; i < n; i++) if (isText[i]) textIdx.push(i);
+        for (let i = 0; i < n; i++) {
+          if (isText[i]) {
+            returnFromX[i] = textX[i];
+            returnFromY[i] = textY[i];
+          } else if (textIdx.length > 0) {
+            const ref = textIdx[Math.floor(Math.random() * textIdx.length)];
+            returnFromX[i] = textX[ref] + (Math.random() - 0.5) * 2;
+            returnFromY[i] = textY[ref] + (Math.random() - 0.5) * 2;
+          } else {
+            returnFromX[i] = positions[i * 3];
+            returnFromY[i] = positions[i * 3 + 1];
+          }
+        }
+      } else {
+        // Reversed mid-flight (still revealing) — start from wherever each
+        // particle actually is right now, so there's no visual jump.
+        for (let i = 0; i < n; i++) {
+          returnFromX[i] = positions[i * 3];
+          returnFromY[i] = positions[i * 3 + 1];
+        }
+      }
+      for (let i = 0; i < n; i++) {
+        positions[i * 3] = returnFromX[i];
+        positions[i * 3 + 1] = returnFromY[i];
+        vx[i] = 0;
+        vy[i] = 0;
+        alphas[i] = 1;
+      }
+      (geometry.attributes.aAlpha as THREE.BufferAttribute).needsUpdate = true;
+      arrived = false;
+      setOverlayOpacity(0);
+    }
+    morphWasActive = isActive;
+
     if (morphProgress > 0) repositionMorphTarget();
     resumeLoop();
   }
@@ -1023,10 +1152,6 @@ export function createHeroEngine(canvas: HTMLCanvasElement, opts: HeroEngineOpti
   }
   function updateMorphTarget() {
     repositionMorphTarget();
-    resumeLoop();
-  }
-  function setTextFade(t: number) {
-    textFade = Math.min(1, Math.max(0, t));
     resumeLoop();
   }
 
@@ -1159,5 +1284,5 @@ export function createHeroEngine(canvas: HTMLCanvasElement, opts: HeroEngineOpti
   void seedText();
   rafId = requestAnimationFrame(frame);
 
-  return { setMorphProgress, setColorMixTarget, setWhiteBgYOffset, updateMorphTarget, setTextFade, setTilt, resumeLoop, destroy };
+  return { setMorphProgress, setColorMixTarget, setWhiteBgYOffset, updateMorphTarget, setTilt, resumeLoop, destroy };
 }
