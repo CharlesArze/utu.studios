@@ -199,7 +199,7 @@ export const BrandSnapStep3 = forwardRef<BrandSnapStepHandle>(function BrandSnap
 
   return (
     <div className="flex flex-col items-center px-6">
-      <div ref={wrapRef} className="pointer-events-none w-[220px] mt-[20px] pb-[100px] opacity-0">
+      <div ref={wrapRef} className="pointer-events-none w-[220px] sm:w-[260px] mt-[20px] pb-6 opacity-0">
         <svg ref={svgRef} className="w-full h-auto" viewBox="0 0 220.52 359.55" overflow="visible" fill="none">
           <circle className="line-start-dot" cx="117.98" cy="0.27" r="2.5" fill="#1a1a1a" />
           <path
@@ -215,7 +215,7 @@ export const BrandSnapStep3 = forwardRef<BrandSnapStepHandle>(function BrandSnap
           {TAG_LABELS.map((label, i) => (
             <text
               key={label.text}
-              className={`line-label line-label-${i + 1} text-[16px]`}
+              className={`line-label line-label-${i + 1} text-[11px]`}
               x={label.x}
               y={label.y}
               textAnchor="middle"

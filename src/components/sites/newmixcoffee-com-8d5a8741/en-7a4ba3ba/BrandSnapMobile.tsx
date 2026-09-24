@@ -41,13 +41,29 @@ const BrandSnapMobile = forwardRef<BrandSnapMobileHandle, { onComplete: () => vo
     const queuedDirection = useRef<"down" | "up" | null>(null);
     const cooldownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    useEffect(() => {
+    // Re-measured every time we're about to use it (mount, and again right before
+    // each `goTo`) rather than cached once: the step wrappers' offsetTop/offsetHeight
+    // shift as videos/fonts finish loading, so a mount-only snapshot goes stale and
+    // step 3 lands at the wrong y — the actual cause of it drifting off-screen on
+    // viewports whose aspect ratio differs from a tall phone.
+    function computeOffsets() {
       const baseline = 0.25 * window.innerHeight - NAV_HEIGHT + MORPH_HEIGHT + MORPH_GAP;
+      const step3Top = step3WrapRef.current?.offsetTop ?? 0;
+      const step3Height = step3WrapRef.current?.offsetHeight ?? 0;
+      // On viewports too short for the circular-trace step to fit under the usual
+      // baseline (wide-but-short windows, tablets in the <1024 mobile range), pull
+      // it up just enough that its bottom stays inside the h-dvh viewport instead
+      // of being clipped by BrandSnapMobile's `overflow-hidden`.
+      const step3Baseline = Math.min(baseline, Math.max(window.innerHeight - step3Height - 16, 0));
       offsets.current = {
         1: 0,
         2: -((step2WrapRef.current?.offsetTop ?? 0) - baseline),
-        3: -((step3WrapRef.current?.offsetTop ?? 0) - baseline),
+        3: -(step3Top - step3Baseline),
       };
+    }
+
+    useEffect(() => {
+      computeOffsets();
     }, []);
 
     useEffect(() => {
@@ -62,6 +78,7 @@ const BrandSnapMobile = forwardRef<BrandSnapMobileHandle, { onComplete: () => vo
       const from = currentStep.current;
       isAnimating.current = true;
       currentStep.current = target;
+      if (target === 3) computeOffsets();
       const y = offsets.current[target];
       const morphTarget = document.querySelector<HTMLElement>("[data-hero-morph-target]");
       const tl = gsap.timeline({
