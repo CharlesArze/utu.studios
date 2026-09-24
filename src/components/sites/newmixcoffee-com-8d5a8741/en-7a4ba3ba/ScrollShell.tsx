@@ -191,6 +191,14 @@ export default function ScrollShell({ children }: { children: ReactNode }) {
     el.scrollTop = 0;
     heroRef.current?.setTextFade(0);
     heroRef.current?.resumeLoop();
+    // Snapped synchronously, not tweened — matches the reference exactly: the
+    // reverse GSAP tween below only animates colorMixTarget/whiteBgYOffset,
+    // and the engine's own velocity/damping spring (stepParticles) carries
+    // particles from the logo back to the "you to you" shape on its own once
+    // this target flips. Never calling this at all (the previous bug) left
+    // morphProgress stuck at 1, which is why the hero came back empty/stuck
+    // on the logo — every non-landing particle's alpha is `1 - morphProgress`.
+    heroRef.current?.setMorphProgress(0);
     gsap.set("[data-hero-morph-target]", { top: "75vh", opacity: 0, y: 0 });
     gsap.set(".brand-dash-line, .brand-dash-line-2", { clipPath: "inset(0 0 100% 0)" });
     gsap.set(".brand-image, .brand-image-2", { opacity: 0, y: 30 });

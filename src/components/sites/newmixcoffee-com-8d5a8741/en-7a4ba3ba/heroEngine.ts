@@ -137,7 +137,6 @@ export function createHeroEngine(canvas: HTMLCanvasElement, opts: HeroEngineOpti
   let startY = new Float32Array(0);
   let pDelay = new Float32Array(0);
   let pDuration = new Float32Array(0);
-  let morphDelay = new Float32Array(0);
   let wobAmp = new Float32Array(0);
   let wobFreq = new Float32Array(0);
   let wobPhase = new Float32Array(0);
@@ -347,8 +346,6 @@ export function createHeroEngine(canvas: HTMLCanvasElement, opts: HeroEngineOpti
     startY = new Float32Array(n);
     pDelay = new Float32Array(n);
     pDuration = new Float32Array(n);
-    morphDelay = new Float32Array(n);
-    for (let i = 0; i < n; i++) morphDelay[i] = 0.3 * Math.random();
     wobAmp = new Float32Array(n);
     wobFreq = new Float32Array(n);
     wobPhase = new Float32Array(n);
@@ -760,18 +757,14 @@ export function createHeroEngine(canvas: HTMLCanvasElement, opts: HeroEngineOpti
 
   function updateRestTargets() {
     for (let i = 0; i < n; i++) {
-      // Per-particle stagger + smoothstep ease instead of a uniform lerp on
-      // the raw `morphProgress` value: every particle moving in perfect
-      // lockstep reads as a mechanical wipe rather than dust settling. Each
-      // particle starts late by its own `morphDelay` (0-30% of the overall
-      // move) and eases in, so the field arrives as a soft cascade — still
-      // finishes exactly at the target when morphProgress hits 1, since
-      // `local` is renormalized to its own 0-1 range.
-      const delay = morphDelay[i];
-      const local = delay >= 1 ? 0 : Math.min(1, Math.max(0, (morphProgress - delay) / (1 - delay)));
-      const eased = local * local * (3 - 2 * local);
-      ox[i] = logoX[i] + (textX[i] - logoX[i]) * eased;
-      oy[i] = logoY[i] + (textY[i] - logoY[i]) * eased;
+      // Plain linear lerp on the raw `morphProgress` — matches the reference
+      // engine exactly (`t.ox = t.logoX + (t.textX-t.logoX)*l`, no per-particle
+      // delay or easing here). The fluid "dust settling" feel comes entirely
+      // from stepParticles' own velocity/damping spring chasing this target,
+      // not from smoothing the target itself — easing it here too fought that
+      // spring instead of complementing it, and read as choppier, not softer.
+      ox[i] = logoX[i] + (textX[i] - logoX[i]) * morphProgress;
+      oy[i] = logoY[i] + (textY[i] - logoY[i]) * morphProgress;
     }
   }
 
