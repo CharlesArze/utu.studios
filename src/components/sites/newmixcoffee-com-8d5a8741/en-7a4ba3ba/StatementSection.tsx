@@ -6,6 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import UtuLogo from "./UtuLogo";
 import BrandParticles, { type BrandParticlesHandle } from "./BrandParticles";
 import BrandSnapMobile, { type BrandSnapMobileHandle } from "./BrandSnapMobile";
+import BrandStorySequence from "./BrandStorySequence";
 import { useVideoAutoplay } from "./useVideoAutoplay";
 import { useScroller, useStatementHandle } from "./ScrollShell";
 
@@ -59,7 +60,6 @@ export default function StatementSection() {
   const brandLineSloganRef = useRef<HTMLDivElement>(null);
   const scroller = useScroller();
 
-  const { videoRef: video1Ref, failed: video1Failed } = useVideoAutoplay();
   const { videoRef: video2Ref, failed: video2Failed } = useVideoAutoplay();
 
   useImperativeHandle(handleRef, () => ({
@@ -267,21 +267,8 @@ export default function StatementSection() {
             <line x1="0.5" y1="0" x2="0.5" y2="136" stroke="#1a1a1a" strokeWidth="1" strokeDasharray="2 2" strokeLinecap="round" />
           </svg>
 
-          <div className="brand-image relative pointer-events-none opacity-0 mt-[25px] lg:mt-[30px] w-[226px] h-[166px] lg:w-[400px] lg:h-[294px] rounded overflow-hidden bg-black/10">
-            {video1Failed ? (
-              <img src="/sites/newmixcoffee-com-8d5a8741/shared/BrandStory_1_poster.webp" alt="" className="w-full h-full object-cover" />
-            ) : (
-              <video
-                ref={video1Ref}
-                src="/sites/newmixcoffee-com-8d5a8741/shared/BrandStory_1.mp4"
-                poster="/sites/newmixcoffee-com-8d5a8741/shared/BrandStory_1_poster.webp"
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full h-full object-cover"
-              />
-            )}
+          <div className="brand-image relative pointer-events-none opacity-0 mt-[25px] lg:mt-[30px] w-[166px] h-[166px] lg:w-[294px] lg:h-[294px] rounded overflow-hidden bg-black/10">
+            <BrandStorySequence className="absolute inset-0 w-full h-full" />
           </div>
 
           <p className="brand-text pointer-events-none opacity-0 font-light text-center text-[#1a1a1a] mt-[16px] lg:mt-[20px] w-full lg:w-[800px] px-6 lg:px-0 text-[14px] lg:text-[24px] tracking-[-0.072px]">

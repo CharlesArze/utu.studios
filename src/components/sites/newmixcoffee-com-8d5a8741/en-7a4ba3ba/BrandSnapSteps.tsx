@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import gsap from "gsap";
+import BrandStorySequence from "./BrandStorySequence";
 import { useVideoAutoplay } from "./useVideoAutoplay";
 
 export type BrandSnapStepHandle = {
@@ -27,7 +28,6 @@ export const BrandSnapStep1 = forwardRef<BrandSnapStepHandle>(function BrandSnap
   const dashRef = useRef<SVGSVGElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
-  const { videoRef, failed } = useVideoAutoplay();
 
   useImperativeHandle(ref, () => ({
     animateIn: () => {
@@ -61,21 +61,8 @@ export const BrandSnapStep1 = forwardRef<BrandSnapStepHandle>(function BrandSnap
       >
         <line x1="0.5" y1="0" x2="0.5" y2="136" stroke="#1a1a1a" strokeWidth="1" strokeDasharray="2 2" strokeLinecap="round" />
       </svg>
-      <div ref={imageRef} className="brand-image relative pointer-events-none opacity-0 mt-[25px] w-[226px] h-[166px] rounded overflow-hidden bg-black/10">
-        {failed ? (
-          <img src="/sites/newmixcoffee-com-8d5a8741/shared/BrandStory_1_poster.webp" alt="" className="w-full h-full object-cover" />
-        ) : (
-          <video
-            ref={videoRef}
-            src="/sites/newmixcoffee-com-8d5a8741/shared/BrandStory_1.mp4"
-            poster="/sites/newmixcoffee-com-8d5a8741/shared/BrandStory_1_poster.webp"
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-          />
-        )}
+      <div ref={imageRef} className="brand-image relative pointer-events-none opacity-0 mt-[25px] w-[166px] h-[166px] rounded overflow-hidden bg-black/10">
+        <BrandStorySequence className="absolute inset-0 w-full h-full" />
       </div>
       <p ref={textRef} className="brand-text pointer-events-none opacity-0 font-light text-center text-[#1a1a1a] mt-[16px] w-full px-6 text-[14px] tracking-[-0.072px]">
         UTU Studios da forma a marcas que perduran, uniendo estrategia, diseño y tecnología
