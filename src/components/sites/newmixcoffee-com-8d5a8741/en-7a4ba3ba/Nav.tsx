@@ -23,10 +23,11 @@ export default function Nav() {
           (lower) stacking level regardless of its own z-index. */}
       <header data-nav-chrome className="fixed left-0 top-0 z-40 h-[72px] lg:h-20 w-full flex items-center justify-between px-6 lg:px-20 bg-black">
       <Link href="/" className="relative z-40 flex-shrink-0 flex items-center gap-3 lg:gap-4">
-        {/* eslint-disable-next-line @next/next/no-img-element -- static vector asset, no optimization needed */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- static asset, no optimization needed */}
         {/* Sphere mark + wordmark both sized at 85% of their original header
-            size (15% smaller), gap/alignment left untouched. */}
-        <img src="/images/brand-mark.svg" alt="" className="w-[27px] h-[27px] lg:w-[37px] lg:h-[37px]" />
+            size (15% smaller), gap/alignment left untouched. Same sphere
+            artwork as the footer's UtuSphere, static here (no wobble/spin). */}
+        <img src="/images/utu-sphere-outline.png" alt="" className="w-[27px] h-[27px] lg:w-[37px] lg:h-[37px]" />
         {/* The shared viewBox (0 0 1904 742) pads the glyph's bottom-right —
             fine for the particle-morph target in StatementSection/heroEngine,
             which is tuned against it, but it throws off centering next to the
