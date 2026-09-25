@@ -193,23 +193,21 @@ vec3 shade(vec2 uv, vec2 p, float t) {
 void main() {
   vec2 uv = gl_FragCoord.xy / u_resolution.xy;
   vec2 screenUv = uv;
-  // The 5 orbiting blobs live within a small fixed radius of the origin in this
-  // width-normalized space — on a footer far taller than it is wide (mobile, where
-  // content stacks into one narrow column) that band only covers a small fraction
-  // near the vertical center, leaving most of the section flat black. Tiling the Y
-  // coordinate by the width keeps the same blob density/scale as the wider desktop
-  // footer instead of stretching a handful of blobs across a much taller canvas.
-  //
-  // The canvas spans the WHOLE footer (often several screens tall), so centring on
-  // the container's own middle only shows a blob cluster when that one fixed point
-  // happens to scroll into view — on a short viewport (mobile) most scroll
-  // positions land on a tile edge instead, reading as empty. u_focus is the
-  // container-space point that's currently at the viewport's own vertical centre
-  // (tracked every frame from JS), so the nearest cluster is retiled to sit there
-  // instead of at a fixed spot — always centred in whatever's actually on screen.
+  // Single cluster only: no Y-tiling. u_focus is the container-space point
+  // currently at the viewport's own vertical centre (tracked every frame from
+  // JS), so the one cluster stays centred in whatever's on screen as you
+  // scroll — the field decays with distance, so everywhere else in this
+  // (often much taller) footer just reads as flat black instead of showing
+  // repeated cluster copies above/below it.
   float period = u_resolution.x;
-  vec2 centered = gl_FragCoord.xy - u_focus;
-  centered.y = mod(centered.y + 0.5 * period, period) - 0.5 * period;
+  // gl_FragCoord.y is bottom-up (WebGL convention); u_focus.y is computed in
+  // JS as a top-down container-space distance, so it has to be flipped here —
+  // the old tiling's mod() wrap masked this mismatch by repeating the cluster
+  // every period-worth of pixels down the whole canvas, so some copy always
+  // lined up near the viewport regardless of the flip. A single untiled
+  // cluster needs the flip to actually land where JS placed it.
+  vec2 focus = vec2(u_focus.x, u_resolution.y - u_focus.y);
+  vec2 centered = gl_FragCoord.xy - focus;
   vec2 p = centered / period;
   float cursorMask = 0.0;
 
