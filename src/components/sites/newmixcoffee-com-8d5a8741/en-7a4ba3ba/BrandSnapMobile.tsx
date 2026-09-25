@@ -159,19 +159,26 @@ const BrandSnapMobile = forwardRef<BrandSnapMobileHandle, { onComplete: () => vo
     return (
       <div className="relative z-[1] bg-black">
         <div className="relative h-dvh overflow-hidden z-[1]">
-          <div ref={bgRef} className="absolute inset-x-0 top-0 bottom-[-50%] bg-[#FAA2CA]">
+          <div ref={bgRef} className="absolute inset-x-0 top-0 bottom-[-50%] bg-[#FAA2CA] will-change-transform">
             <BrandParticles density={0.2} />
           </div>
 
           <div
             data-hero-morph-target
-            className="absolute left-1/2 -translate-x-1/2 pointer-events-none text-black z-10 opacity-0"
-            style={{ width: MORPH_WIDTH, height: MORPH_HEIGHT, top: "75vh" }}
+            className="absolute left-1/2 -translate-x-1/2 pointer-events-none text-black z-10 opacity-0 will-change-transform"
+            // dvh, not vh — matches the h-dvh container below. On iOS Safari, vh uses the
+            // large (toolbar-hidden) viewport while the container tracks the visible one,
+            // so as the address bar shows/hides mid-swipe the two drift apart and this
+            // logo visibly overlaps whatever's under it. dvh keeps both in the same frame.
+            style={{ width: MORPH_WIDTH, height: MORPH_HEIGHT, top: "75dvh" }}
           >
             <UtuLogo className="w-full h-full" viewBox="11 5 1009 394" />
           </div>
 
-          <div ref={contentRef} className="relative w-full flex flex-col items-center pt-[max(calc(25dvh_-_39px),134px)]">
+          <div
+            ref={contentRef}
+            className="relative w-full flex flex-col items-center pt-[max(calc(25dvh_-_39px),134px)] will-change-transform"
+          >
             <BrandSnapStep1 ref={step1Ref} />
             <div ref={step2WrapRef}>
               <BrandSnapStep2 ref={step2Ref} />

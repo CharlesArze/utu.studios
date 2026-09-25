@@ -195,7 +195,7 @@ export default function ScrollShell({ children }: { children: ReactNode }) {
     // all (the previous bug) left morphProgress stuck at 1, which is why the
     // hero came back empty/stuck on the logo.
     heroRef.current?.setMorphProgress(0);
-    gsap.set("[data-hero-morph-target]", { top: "75vh", opacity: 0, y: 0 });
+    gsap.set("[data-hero-morph-target]", { top: "75dvh", opacity: 0, y: 0 });
     gsap.set(".brand-dash-line, .brand-dash-line-2", { clipPath: "inset(0 0 100% 0)" });
     gsap.set(".brand-image, .brand-image-2", { opacity: 0, y: 30 });
     gsap.set(".brand-text, .brand-slogan", { opacity: 0, y: 20 });
