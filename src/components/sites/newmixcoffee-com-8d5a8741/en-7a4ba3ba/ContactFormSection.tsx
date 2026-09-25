@@ -9,8 +9,9 @@ const SUPPORT_OPTIONS = ["Estrategia", "(Re)branding", "Diseño de Producto", "(
 const TIMING_OPTIONS = ["Ayer", "1 Mes", "1-3 Meses", "Flexible"];
 const SCALE_OPTIONS = ["$0 – $10k", "$11k – $30k", "$31k – $100k", "$100k +"];
 
-const inputClasses = "border border-black/40 px-4 py-3 text-[15px] normal-case font-normal bg-white";
-const labelClasses = "flex flex-col gap-2 text-[12px] uppercase tracking-wide text-black";
+const inputClasses =
+  "border border-white/40 px-4 py-3 text-[15px] normal-case font-normal bg-black text-white placeholder:text-white/50";
+const labelClasses = "flex flex-col gap-2 text-[12px] uppercase tracking-wide text-white";
 
 export default function ContactFormSection() {
   const [selected, setSelected] = useState<string[]>([]);
@@ -41,17 +42,17 @@ export default function ContactFormSection() {
   }
 
   return (
-    <section className="bg-[#FAA2CA] pt-32 lg:pt-40 pb-20 lg:pb-32">
+    <section className="bg-black pt-32 lg:pt-40 pb-20 lg:pb-32">
       <div className="px-6 lg:px-20 max-w-[1440px] mx-auto">
         <h1
-          className={`${newsreader.className} font-normal text-[28px] lg:text-[40px] leading-[1.2] text-black max-w-[700px] mb-10 lg:mb-14`}
+          className={`${newsreader.className} font-normal text-[28px] lg:text-[40px] leading-[1.2] text-white max-w-[700px] mb-10 lg:mb-14`}
         >
           Nos encantaría saber de ti, envíanos una solicitud.
         </h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-8 max-w-[900px]">
           <div>
-            <p className="text-[12px] uppercase tracking-wide text-black mb-3">Necesito ayuda con</p>
+            <p className="text-[12px] uppercase tracking-wide text-white mb-3">Necesito ayuda con</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {SUPPORT_OPTIONS.map((opt) => {
                 const active = selected.includes(opt);
@@ -60,8 +61,8 @@ export default function ContactFormSection() {
                     type="button"
                     key={opt}
                     onClick={() => toggleOption(opt)}
-                    className={`h-14 px-3 rounded-md border border-black text-[14px] text-center transition-colors ${
-                      active ? "bg-black text-white" : "bg-transparent text-black"
+                    className={`h-14 px-3 bg-black text-white text-[14px] text-center transition-colors ${
+                      active ? "border border-white" : "border border-white/30"
                     }`}
                   >
                     {opt}
@@ -143,7 +144,7 @@ export default function ContactFormSection() {
 
           <button
             type="submit"
-            className="self-start px-8 py-4 rounded-full border border-black text-[15px] font-normal text-black transition-colors hover:bg-black hover:text-white"
+            className="self-start px-8 py-4 rounded-full border border-white text-[15px] font-normal text-white transition-colors hover:bg-white hover:text-black"
           >
             Enviar solicitud
           </button>
