@@ -15,7 +15,7 @@ export default function ContactSection() {
       </div>
       <a
         href="/contacto"
-        className="inline-flex items-center justify-center px-6 py-2 lg:px-8 lg:py-4 border border-white rounded-[4px] text-[14px] lg:text-[18px] font-bold text-white text-center transition-colors hover:bg-white hover:text-black"
+        className="inline-flex items-center justify-center px-6 py-2 lg:px-8 lg:py-4 border border-white text-[14px] lg:text-[18px] font-bold text-white text-center transition-colors hover:bg-white hover:text-black"
       >
         Contáctanos
       </a>

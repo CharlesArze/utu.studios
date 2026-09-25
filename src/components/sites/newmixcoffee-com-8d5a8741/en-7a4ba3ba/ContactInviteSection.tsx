@@ -15,7 +15,7 @@ export default function ContactInviteSection() {
         </h2>
         <a
           href="/contacto"
-          className="inline-flex items-center justify-center px-8 py-4 lg:px-10 lg:py-5 rounded-full bg-white text-black text-[16px] lg:text-[18px] font-normal transition-opacity hover:opacity-80"
+          className="inline-flex items-center justify-center px-8 py-4 lg:px-10 lg:py-5 bg-white text-black text-[16px] lg:text-[18px] font-normal transition-opacity hover:opacity-80"
         >
           Contáctanos
         </a>
