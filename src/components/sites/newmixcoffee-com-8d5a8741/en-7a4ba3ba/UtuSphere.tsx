@@ -19,7 +19,7 @@ export default function UtuSphere({ className }: { className?: string }) {
       <g filter="url(#utu-sphere-wobble)">
         {/* Movimiento B: rotación antihoraria infinita sobre el centro exacto de la esfera */}
         <g>
-          <image href="/images/utu-sphere.svg" width="1000" height="1000" />
+          <image href="/images/utu-sphere-outline.png" width="1000" height="1000" />
           <animateTransform
             attributeName="transform"
             type="rotate"
