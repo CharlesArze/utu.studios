@@ -228,7 +228,10 @@ export const BrandSnapStep3 = forwardRef<BrandSnapStepHandle>(function BrandSnap
             </text>
           ))}
         </svg>
-        <div ref={wordmarkRef} className="brand-line-slogan block w-full opacity-0 pointer-events-none mt-[15px]">
+        <div
+          ref={wordmarkRef}
+          className="brand-line-slogan block w-full opacity-0 pointer-events-none mt-[15px] scale-[2] origin-top"
+        >
           <svg viewBox="0 0 960 164" className="w-full h-auto" aria-label="you to you">
             <defs>
               <filter id="grain-text-mobile" x="-20%" y="-20%" width="140%" height="140%">
