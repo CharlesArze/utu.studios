@@ -1,6 +1,7 @@
 import Link from "next/link";
-import FooterLogoParticles from "./FooterLogoParticles";
+import ContactSection from "./ContactSection";
 import MetaballsBackground from "./MetaballsBackground";
+import UtuSphere from "./UtuSphere";
 
 const FOOTER_LINKS = [
   { label: "Inicio", href: "/" },
@@ -26,13 +27,16 @@ export default function Footer() {
   return (
     <footer className="relative overflow-hidden bg-black pt-20 lg:!pt-[160px] pb-[70px] lg:pb-[80px]">
       {/* Animated "Metaballs" shader (21st.dev Shader Builder recipe), sitting
-          behind the whole footer including the UTU wordmark reveal above —
-          its dark low colour reads like the section's black bg, so the
-          wordmark's transparent background shows the moving blobs through it. */}
+          behind the whole footer including the contact block above — its dark
+          low colour reads like the section's black bg, so the contact
+          block's transparent background shows the moving blobs through it. */}
       <MetaballsBackground className="absolute inset-0" />
 
       <div className="relative z-10">
-        <FooterLogoParticles className="w-full aspect-[1009/394] mb-10 lg:mb-16" />
+        <div className="mb-10 lg:mb-16">
+          <UtuSphere className="h-[100px] lg:h-[180px] aspect-square mx-auto mb-8 lg:mb-12 pointer-events-none" />
+          <ContactSection />
+        </div>
 
         <div className="px-6 lg:px-20 xl:px-0 flex justify-center">
           <div className="w-full xl:max-w-[1440px]">
