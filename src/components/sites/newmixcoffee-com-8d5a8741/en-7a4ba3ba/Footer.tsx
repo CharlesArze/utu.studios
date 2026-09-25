@@ -25,7 +25,7 @@ function UnderlineLink({ href, children, external }: { href: string; children: R
 
 export default function Footer() {
   return (
-    <footer className="relative overflow-hidden bg-black pt-20 lg:!pt-[160px] pb-[70px] lg:pb-[80px]">
+    <footer className="relative overflow-hidden bg-black pt-[115px] lg:!pt-[230px] pb-[84px] lg:pb-[96px]">
       {/* Animated "Metaballs" shader (21st.dev Shader Builder recipe), sitting
           behind the whole footer including the contact block above — its dark
           low colour reads like the section's black bg, so the contact
