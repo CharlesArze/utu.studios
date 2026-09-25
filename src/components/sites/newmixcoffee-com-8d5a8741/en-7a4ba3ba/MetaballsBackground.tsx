@@ -386,6 +386,19 @@ export default function MetaballsBackground({ className }: { className?: string 
     let visible = !document.hidden;
     const startedAt = performance.now();
 
+    // Fixed focus point, baked into the canvas instead of re-tracked from scroll
+    // position: the footer is short and single-screen now (no more tall,
+    // multi-tile wordmark reveal), so the cluster just sits at a constant
+    // spot relative to the container. Recomputed on resize only — since it's
+    // no longer following window.innerHeight/scroll every frame, it scrolls
+    // in perfect lockstep with the DOM content instead of visibly drifting
+    // against it. A cluster's max radius is ~0.308x the container width
+    // (0.55 orbit amplitude + ~0.311 blob visual radius, both in
+    // u_scale-space, divided by u_scale=2.8 — see the shape uniform below),
+    // so this keeps that margin off the top edge.
+    let focusX = 0;
+    let focusY = 0;
+
     function resize() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const w = Math.max(1, Math.floor(container!.clientWidth * dpr));
@@ -395,6 +408,10 @@ export default function MetaballsBackground({ className }: { className?: string 
         canvas!.height = h;
         gl!.viewport(0, 0, w, h);
       }
+      const rect = container!.getBoundingClientRect();
+      const topMargin = Math.min(rect.width * 0.34, rect.height);
+      focusX = canvas!.width * 0.5;
+      focusY = (topMargin + 50) * dpr;
     }
     resize();
     const resizeObserver = new ResizeObserver(resize);
@@ -411,26 +428,7 @@ export default function MetaballsBackground({ className }: { className?: string 
         // instead of re-introducing the fixed-fraction shift that used to fight
         // the centring math there.
         gl!.uniform4f(uSpace, 0, 0, 0, 0);
-        // Retile so the nearest blob cluster sits at whatever part of the (much
-        // taller) footer is currently in the viewport, instead of a fixed point
-        // that only lines up with the screen on some scroll positions/screen
-        // heights — see the shader's u_focus comment.
-        //
-        // Clamping straight to 0 let the cluster's centre land exactly on the
-        // section's top edge, cutting the upper half of every blob off against
-        // the section above. A cluster's max radius is ~0.308x the container
-        // width (0.55 orbit amplitude + ~0.311 blob visual radius, both in
-        // u_scale-space, divided by u_scale=2.8 — see MetaballsBackground's
-        // shape uniform). Keep a margin of that size (+safety pad) off the top
-        // edge so the full cluster always stays inside the section; recomputed
-        // every frame from the live container rect, so it tracks resizes and
-        // orientation changes.
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        const rect = container!.getBoundingClientRect();
-        const topMargin = Math.min(rect.width * 0.34, rect.height);
-        const viewportCenterY = window.innerHeight / 2 - rect.top;
-        const focusY = Math.max(topMargin, Math.min(rect.height, viewportCenterY)) * dpr;
-        gl!.uniform2f(uFocus, canvas!.width * 0.5, focusY);
+        gl!.uniform2f(uFocus, focusX, focusY);
         gl!.drawArrays(gl!.TRIANGLES, 0, 3);
       }
       raf = requestAnimationFrame(frame);
