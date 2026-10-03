@@ -68,7 +68,14 @@ const HeroCanvas = forwardRef<HeroCanvasHandle, HeroCanvasProps>(function HeroCa
 
     import("./heroEngine").then(({ createHeroEngine }) => {
       if (cancelled) return;
-      engineRef.current = createHeroEngine(canvas, { onSwipeUp: onWheelDown });
+      // The engine listens on window for every touch, so an upward swipe made in the white
+      // section would re-run the hero->white transition. Only honor it while the hero is shown
+      // (showChromeRef is read live, unlike the onWheelDown captured when the engine was created).
+      engineRef.current = createHeroEngine(canvas, {
+        onSwipeUp: () => {
+          if (showChromeRef.current) onWheelDown();
+        },
+      });
     });
 
     return () => {

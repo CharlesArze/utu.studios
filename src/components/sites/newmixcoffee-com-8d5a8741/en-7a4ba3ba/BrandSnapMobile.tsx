@@ -24,8 +24,10 @@ const MORPH_GAP = 14; // gap before the first dash line (mt-[14px] on BrandSnapS
  * queued mid-animation (touch only) speeds the current one up instead of
  * being dropped, exactly like the reference.
  */
-const BrandSnapMobile = forwardRef<BrandSnapMobileHandle, { onComplete: () => void; onExitUp: () => void }>(
-  function BrandSnapMobile({ onComplete, onExitUp }, ref) {
+const BrandSnapMobile = forwardRef<
+  BrandSnapMobileHandle,
+  { onComplete: () => void; onExitUp: () => void; onMorphMove: () => void }
+>(function BrandSnapMobile({ onComplete, onExitUp, onMorphMove }, ref) {
     const contentRef = useRef<HTMLDivElement>(null);
     const bgRef = useRef<HTMLDivElement>(null);
     const step2WrapRef = useRef<HTMLDivElement>(null);
@@ -91,6 +93,10 @@ const BrandSnapMobile = forwardRef<BrandSnapMobileHandle, { onComplete: () => vo
       if (target === 3) computeOffsets();
       const y = offsets.current[target];
       const morphTarget = document.querySelector<HTMLElement>("[data-hero-morph-target]");
+      // Pin the logo's resting top to the brand-snap baseline before offsetting it. The landing
+      // tween that normally sets this can be interrupted, leaving it at the hero position, and then
+      // the logo stays on screen over the content instead of scrolling away with it.
+      if (morphTarget) gsap.set(morphTarget, { top: `${Math.round(0.25 * window.innerHeight - NAV_HEIGHT)}px` });
       const tl = gsap.timeline({
         onComplete: () => {
           activeTimeline.current = null;
@@ -112,7 +118,9 @@ const BrandSnapMobile = forwardRef<BrandSnapMobileHandle, { onComplete: () => vo
       activeTimeline.current = tl;
       if (source === "touch" && queuedDirection.current) tl.timeScale(10);
       tl.to(contentRef.current, { y, duration: 0.5, ease: "power3.out" }, 0);
-      if (morphTarget) tl.to(morphTarget, { y, duration: 0.5, ease: "power3.out" }, 0);
+      // The WebGL logo reads this node's rect each frame (heroEngine.repositionMorphTarget),
+      // so it has to be told to follow the DOM move; otherwise it stays where the step started.
+      if (morphTarget) tl.to(morphTarget, { y, duration: 0.5, ease: "power3.out", onUpdate: onMorphMove }, 0);
       tl.to(bgRef.current, { y: 0.15 * y, duration: 0.5, ease: "power3.out" }, 0);
 
       if (target > from) {

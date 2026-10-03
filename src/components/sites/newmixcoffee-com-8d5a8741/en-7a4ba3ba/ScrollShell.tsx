@@ -22,6 +22,7 @@ type StatementContextValue = {
   handleRef: React.RefObject<StatementSectionHandle | null>;
   onSnapComplete: () => void;
   onSnapExitUp: () => void;
+  onMorphMove: () => void;
 };
 const StatementContext = createContext<StatementContextValue | null>(null);
 
@@ -274,7 +275,12 @@ export default function ScrollShell({ children }: { children: ReactNode }) {
   useEffect(() => destroyLenis, [destroyLenis]);
 
   const statementContext = useMemo<StatementContextValue>(
-    () => ({ handleRef: statementHandleRef, onSnapComplete: brandSnapComplete, onSnapExitUp: transitionToHero }),
+    () => ({
+      handleRef: statementHandleRef,
+      onSnapComplete: brandSnapComplete,
+      onSnapExitUp: transitionToHero,
+      onMorphMove: () => heroRef.current?.updateMorphTarget(),
+    }),
     [brandSnapComplete, transitionToHero],
   );
 
