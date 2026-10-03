@@ -386,9 +386,6 @@ export default function MetaballsBackground({ className }: { className?: string 
     let destroyed = false;
     let visible = !document.hidden;
     let inView = true;
-    let lastDraw = 0;
-    // ponytail: 30fps cap; the field moves slowly, so 60fps buys nothing on mobile GPUs.
-    const FRAME_MS = 1000 / 30;
     const startedAt = performance.now();
 
     // Fixed focus point, baked into the canvas instead of re-tracked from scroll
@@ -425,8 +422,7 @@ export default function MetaballsBackground({ className }: { className?: string 
 
     function frame(now: number) {
       if (destroyed) return;
-      if (visible && inView && now - lastDraw >= FRAME_MS) {
-        lastDraw = now;
+      if (visible && inView) {
         const seconds = (now - startedAt) / 1000;
         // speed 40/100 -> time advances at 0.86x real seconds.
         gl!.uniform4f(uScene, canvas!.width, canvas!.height, seconds * 0.86, 3.0);
