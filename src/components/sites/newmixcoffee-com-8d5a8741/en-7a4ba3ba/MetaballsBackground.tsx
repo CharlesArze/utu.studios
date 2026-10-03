@@ -323,7 +323,8 @@ export default function MetaballsBackground({ className }: { className?: string 
     const container = canvas?.parentElement;
     if (!canvas || !container) return;
 
-    const gl = canvas.getContext("webgl", { antialias: true, alpha: false }) as WebGLRenderingContext | null;
+    // ponytail: no MSAA needed for a shader-drawn fullscreen triangle; the blobs are soft anyway.
+    const gl = canvas.getContext("webgl", { antialias: false, alpha: false }) as WebGLRenderingContext | null;
     if (!gl) return;
 
     const vertexShader = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SRC);
@@ -384,6 +385,10 @@ export default function MetaballsBackground({ className }: { className?: string 
     let raf = 0;
     let destroyed = false;
     let visible = !document.hidden;
+    let inView = true;
+    let lastDraw = 0;
+    // ponytail: 30fps cap; the field moves slowly, so 60fps buys nothing on mobile GPUs.
+    const FRAME_MS = 1000 / 30;
     const startedAt = performance.now();
 
     // Fixed focus point, baked into the canvas instead of re-tracked from scroll
@@ -400,7 +405,8 @@ export default function MetaballsBackground({ className }: { className?: string 
     let focusY = 0;
 
     function resize() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // ponytail: render at 1x. Full-footer fragment shader at 2x-3x DPR is what stalls phones; blobs are soft so the loss is invisible.
+      const dpr = 1;
       const w = Math.max(1, Math.floor(container!.clientWidth * dpr));
       const h = Math.max(1, Math.floor(container!.clientHeight * dpr));
       if (canvas!.width !== w || canvas!.height !== h) {
@@ -419,7 +425,8 @@ export default function MetaballsBackground({ className }: { className?: string 
 
     function frame(now: number) {
       if (destroyed) return;
-      if (visible) {
+      if (visible && inView && now - lastDraw >= FRAME_MS) {
+        lastDraw = now;
         const seconds = (now - startedAt) / 1000;
         // speed 40/100 -> time advances at 0.86x real seconds.
         gl!.uniform4f(uScene, canvas!.width, canvas!.height, seconds * 0.86, 3.0);
@@ -440,10 +447,17 @@ export default function MetaballsBackground({ className }: { className?: string 
     }
     document.addEventListener("visibilitychange", onVisibility);
 
+    // Skip GPU work entirely while the footer is scrolled out of view.
+    const intersectionObserver = new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
+    });
+    intersectionObserver.observe(canvas);
+
     return () => {
       destroyed = true;
       cancelAnimationFrame(raf);
       resizeObserver.disconnect();
+      intersectionObserver.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
       gl.deleteProgram(program);
       gl.deleteShader(vertexShader);
