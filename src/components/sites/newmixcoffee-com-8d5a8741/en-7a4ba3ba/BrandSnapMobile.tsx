@@ -24,8 +24,10 @@ const MORPH_GAP = 14; // gap before the first dash line (mt-[14px] on BrandSnapS
  * queued mid-animation (touch only) speeds the current one up instead of
  * being dropped, exactly like the reference.
  */
-const BrandSnapMobile = forwardRef<BrandSnapMobileHandle, { onComplete: () => void; onExitUp: () => void }>(
-  function BrandSnapMobile({ onComplete, onExitUp }, ref) {
+const BrandSnapMobile = forwardRef<
+  BrandSnapMobileHandle,
+  { onComplete: () => void; onExitUp: () => void; onMorphMove: () => void }
+>(function BrandSnapMobile({ onComplete, onExitUp, onMorphMove }, ref) {
     const contentRef = useRef<HTMLDivElement>(null);
     const bgRef = useRef<HTMLDivElement>(null);
     const step2WrapRef = useRef<HTMLDivElement>(null);
@@ -66,13 +68,23 @@ const BrandSnapMobile = forwardRef<BrandSnapMobileHandle, { onComplete: () => vo
       computeOffsets();
     }, []);
 
-    useEffect(() => {
-      const particlesHost = bgRef.current?.firstElementChild as (HTMLDivElement & {
+    // This component stays mounted after the snap hands off to content, so its
+    // particle loop must be stopped here (it would otherwise keep a rAF running
+    // under the whole page on mobile) and restarted on reset when the hero returns.
+    const particlesHost = () =>
+      bgRef.current?.firstElementChild as (HTMLDivElement & {
         __brandParticles?: { start: () => void; stop: () => void };
       }) | null;
-      particlesHost?.__brandParticles?.start();
-      return () => particlesHost?.__brandParticles?.stop();
+
+    useEffect(() => {
+      particlesHost()?.__brandParticles?.start();
+      return () => particlesHost()?.__brandParticles?.stop();
     }, []);
+
+    function finishSnap() {
+      particlesHost()?.__brandParticles?.stop();
+      onComplete();
+    }
 
     function goTo(target: 1 | 2 | 3, source: "wheel" | "touch") {
       const from = currentStep.current;
@@ -81,26 +93,34 @@ const BrandSnapMobile = forwardRef<BrandSnapMobileHandle, { onComplete: () => vo
       if (target === 3) computeOffsets();
       const y = offsets.current[target];
       const morphTarget = document.querySelector<HTMLElement>("[data-hero-morph-target]");
+      // Pin the logo's resting top to the brand-snap baseline before offsetting it. The landing
+      // tween that normally sets this can be interrupted, leaving it at the hero position, and then
+      // the logo stays on screen over the content instead of scrolling away with it.
+      if (morphTarget) gsap.set(morphTarget, { top: `${Math.round(0.25 * window.innerHeight - NAV_HEIGHT)}px` });
       const tl = gsap.timeline({
         onComplete: () => {
           activeTimeline.current = null;
+          // Release the lock before replaying a queued swipe; otherwise the replay
+          // sees isAnimating still true, re-queues itself, and the snap never moves again.
+          isAnimating.current = false;
           const queued = queuedDirection.current;
           queuedDirection.current = null;
           if (queued) {
             handleSwipeInternal(queued, "touch");
             return;
           }
-          isAnimating.current = false;
           cooldownTimer.current = setTimeout(() => {
             cooldownTimer.current = null;
           }, 200);
-          if (target === 3 && from < 3) onComplete();
+          if (target === 3 && from < 3) finishSnap();
         },
       });
       activeTimeline.current = tl;
       if (source === "touch" && queuedDirection.current) tl.timeScale(10);
       tl.to(contentRef.current, { y, duration: 0.5, ease: "power3.out" }, 0);
-      if (morphTarget) tl.to(morphTarget, { y, duration: 0.5, ease: "power3.out" }, 0);
+      // The WebGL logo reads this node's rect each frame (heroEngine.repositionMorphTarget),
+      // so it has to be told to follow the DOM move; otherwise it stays where the step started.
+      if (morphTarget) tl.to(morphTarget, { y, duration: 0.5, ease: "power3.out", onUpdate: onMorphMove }, 0);
       tl.to(bgRef.current, { y: 0.15 * y, duration: 0.5, ease: "power3.out" }, 0);
 
       if (target > from) {
@@ -125,7 +145,7 @@ const BrandSnapMobile = forwardRef<BrandSnapMobileHandle, { onComplete: () => vo
       if (direction === "down") {
         if (step === 1) goTo(2, source);
         else if (step === 2) goTo(3, source);
-        else onComplete();
+        else finishSnap();
       } else {
         if (step === 1) onExitUp();
         else if (step === 2) goTo(1, source);
@@ -149,6 +169,7 @@ const BrandSnapMobile = forwardRef<BrandSnapMobileHandle, { onComplete: () => vo
         step1Ref.current?.reset();
         step2Ref.current?.reset();
         step3Ref.current?.reset();
+        particlesHost()?.__brandParticles?.start();
         gsap.set(contentRef.current, { y: 0 });
         gsap.set(bgRef.current, { y: 0 });
         const morphTarget = document.querySelector<HTMLElement>("[data-hero-morph-target]");

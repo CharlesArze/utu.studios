@@ -42,7 +42,7 @@ const LINE_PATH =
  * height — it pins because its ancestor got taller, not because it did.
  */
 export default function StatementSection() {
-  const { handleRef, onSnapComplete, onSnapExitUp } = useStatementHandle();
+  const { handleRef, onSnapComplete, onSnapExitUp, onMorphMove } = useStatementHandle();
   // Decided once on mount, not re-evaluated on resize — matches the
   // reference's own `M` wrapper (a mid-session breakpoint crossing would
   // need a full remount to switch scroll mechanisms anyway).
@@ -235,7 +235,9 @@ export default function StatementSection() {
   if (mobile === null) return null;
 
   if (mobile) {
-    return <BrandSnapMobile ref={mobileRef} onComplete={onSnapComplete} onExitUp={onSnapExitUp} />;
+    return (
+      <BrandSnapMobile ref={mobileRef} onComplete={onSnapComplete} onExitUp={onSnapExitUp} onMorphMove={onMorphMove} />
+    );
   }
 
   return (
